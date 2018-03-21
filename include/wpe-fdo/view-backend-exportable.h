@@ -32,12 +32,19 @@ struct wpe_view_backend_exportable_fdo;
 struct wpe_view_backend_exportable_fdo_buffer;
 
 struct wpe_view_backend_exportable_fdo_client {
-    void (*export_buffer_resource)(void* data, struct wl_resource* buffer_resource);
-    void (*export_linux_dmabuf)(void* data, uint32_t width, uint32_t height,
-                                uint32_t format, uint32_t flags,
-                                uint32_t num_planes, const int32_t* fds,
-                                const uint32_t* strides, const uint32_t* offsets,
-                                const uint64_t* modifiers);
+    /**
+     * Applications hook into 'export_buffer' callback to retrieve
+     * buffers that are ready for rendering. The @buffer argument
+     * is an abstract object whose type is @buffer_type.
+     *
+     * Applications can then use any of the 'accessor' methods to
+     * retrieve platform-specific contents of the buffer.
+     *
+     * Applications must release the buffer when it is no longer needed,
+     * by calling wpe_view_backend_exportable_fdo_dispatch_release_buffer().
+     */
+    void (*export_buffer)(void* data, enum wpe_view_backend_buffer_type buffer_type,
+                          struct wpe_view_backend_exportable_fdo_buffer *buffer);
 };
 
 struct wpe_view_backend_exportable_fdo*
@@ -53,7 +60,7 @@ void
 wpe_view_backend_exportable_fdo_dispatch_frame_complete(struct wpe_view_backend_exportable_fdo*);
 
 void
-wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_exportable_fdo*, struct wl_resource*);
+wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_exportable_fdo*, struct wpe_view_backend_exportable_fdo_buffer *buffer);
 
 #ifdef __cplusplus
 }

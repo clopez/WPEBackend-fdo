@@ -89,18 +89,22 @@ public:
 
     void exportBufferResource(struct wl_resource* bufferResource) override
     {
-        m_clientBundle->client->export_buffer_resource(m_clientBundle->data, bufferResource);
+        struct wpe_view_backend_exportable_fdo_buffer *buffer = new(struct wpe_view_backend_exportable_fdo_buffer);
+        buffer->wlResourceBuffer = bufferResource;
+        buffer->dmabufBuffer = nullptr;
+        m_clientBundle->client->export_buffer(m_clientBundle->data,
+                                              WPE_VIEW_BACKEND_BUFFER_TYPE_WL_RESOURCE,
+                                              buffer);
     }
 
-    void exportLinuxDmabuf(uint32_t width, uint32_t height, uint32_t format,
-                           uint32_t flags, uint32_t num_planes, const int32_t* fds,
-                           const uint32_t* strides, const uint32_t* offsets,
-                           const uint64_t* modifiers) override
+    void exportLinuxDmabuf(const struct linux_dmabuf_buffer *dmabuf_buffer) override
     {
-        m_clientBundle->client->export_linux_dmabuf(m_clientBundle->data,
-                                                    width, height, format, flags,
-                                                    num_planes, fds, strides, offsets,
-                                                    modifiers);
+        struct wpe_view_backend_exportable_fdo_buffer *buffer = new(struct wpe_view_backend_exportable_fdo_buffer);
+        buffer->wlResourceBuffer = nullptr;
+        buffer->dmabufBuffer = dmabuf_buffer;
+        m_clientBundle->client->export_buffer(m_clientBundle->data,
+                                              WPE_VIEW_BACKEND_BUFFER_TYPE_LINUX_DMABUF,
+                                              buffer);
     }
 
     void dispatchFrameCallback()
@@ -110,9 +114,11 @@ public:
         m_callbackResources.clear();
     }
 
-    void releaseBuffer(struct wl_resource* buffer_resource)
+    void releaseBuffer(const struct wpe_view_backend_exportable_fdo_buffer *buffer)
     {
-        wl_buffer_send_release(buffer_resource);
+        if (buffer->wlResourceBuffer)
+            wl_buffer_send_release(buffer->wlResourceBuffer);
+        delete(buffer);
     }
 
 private:
@@ -222,9 +228,10 @@ wpe_view_backend_exportable_fdo_dispatch_frame_complete(struct wpe_view_backend_
 
 __attribute__((visibility("default")))
 void
-wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_exportable_fdo* exportable, struct wl_resource* buffer_resource)
+wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_exportable_fdo* exportable,
+                                                        struct wpe_view_backend_exportable_fdo_buffer *buffer)
 {
-    exportable->clientBundle->viewBackend->releaseBuffer(buffer_resource);
+    exportable->clientBundle->viewBackend->releaseBuffer(buffer);
 }
 
 }

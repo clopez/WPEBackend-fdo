@@ -1,5 +1,6 @@
 #include "ws.h"
 
+#include <assert.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include "linux-dmabuf/linux-dmabuf.h"
@@ -107,15 +108,11 @@ static const struct wl_surface_interface s_surfaceInterface = {
         auto& surface = *static_cast<Surface*>(wl_resource_get_user_data(surfaceResource));
 
         if (surface.dmabufBuffer) {
-            const struct linux_dmabuf_attributes *attribs =
-                linux_dmabuf_get_buffer_attributes(surface.dmabufBuffer);
-
-            surface.exportableClient->exportLinuxDmabuf(attribs->width, attribs->height,
-                                                        attribs->format, attribs->flags,
-                                                        attribs->n_planes,
-                                                        attribs->fd, attribs->stride,
-                                                        attribs->offset, attribs->modifier);
+            const struct linux_dmabuf_buffer *dmabufBuffer = surface.dmabufBuffer;
+            surface.dmabufBuffer = nullptr;
+            surface.exportableClient->exportLinuxDmabuf(dmabufBuffer);
         } else {
+            assert(surface.bufferResource);
             struct wl_resource* bufferResource = surface.bufferResource;
             surface.bufferResource = nullptr;
             surface.exportableClient->exportBufferResource(bufferResource);
