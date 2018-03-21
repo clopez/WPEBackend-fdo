@@ -6,6 +6,9 @@ extern "C" {
 
 #include <wpe/view-backend.h>
 
+typedef void* EGLDisplay;
+typedef void* EGLImageKHR;
+
 enum wpe_view_backend_buffer_type {
     WPE_VIEW_BACKEND_BUFFER_TYPE_NONE,
     WPE_VIEW_BACKEND_BUFFER_TYPE_WL_RESOURCE,
@@ -62,6 +65,22 @@ wpe_view_backend_exportable_fdo_dispatch_frame_complete(struct wpe_view_backend_
 void
 wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_exportable_fdo*, struct wpe_view_backend_exportable_fdo_buffer *buffer);
 
+/**
+ * wpe_view_backend_exportable_fdo_get_egl_image:
+ *
+ * Import the given opaque buffer into an EGLImageKHR.
+ *
+ * This method will choose the proper EGL attributes to use, based on
+ * the type of buffer (wl_resource or linux-dmabuf).
+ *
+ * Returns: An EGLImageKHR, which must be destroyed with
+ * eglDestroyImageKHR(); or NULL on error, in which case
+ * eglGetError() can be used to retrieve it.
+ */
+EGLImageKHR
+wpe_view_backend_exportable_fdo_get_egl_image(struct wpe_view_backend_exportable_fdo*,
+                                              struct wpe_view_backend_exportable_fdo_buffer*,
+                                              EGLDisplay);
 #ifdef __cplusplus
 }
 #endif

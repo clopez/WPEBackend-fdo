@@ -1,6 +1,9 @@
 #include <wpe-fdo/view-backend-exportable.h>
 
+#include <assert.h>
 #include "ws.h"
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <gio/gio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -234,4 +237,65 @@ wpe_view_backend_exportable_fdo_dispatch_release_buffer(struct wpe_view_backend_
     exportable->clientBundle->viewBackend->releaseBuffer(buffer);
 }
 
+__attribute__((visibility("default")))
+EGLImageKHR
+wpe_view_backend_exportable_fdo_get_egl_image(struct wpe_view_backend_exportable_fdo* exportable,
+                                              struct wpe_view_backend_exportable_fdo_buffer *buffer,
+                                              EGLDisplay display)
+{
+    EGLint attribs[50];
+    int atti = 0;
+    EGLint import_type;
+    EGLClientBuffer client_buffer = nullptr;
+
+    if (buffer->dmabufBuffer) {
+        const struct linux_dmabuf_attributes *buf_attribs =
+            linux_dmabuf_get_buffer_attributes(buffer->dmabufBuffer);
+
+        import_type = EGL_LINUX_DMA_BUF_EXT;
+
+        attribs[atti++] = EGL_WIDTH;
+        attribs[atti++] = buf_attribs->width;
+        attribs[atti++] = EGL_HEIGHT;
+        attribs[atti++] = buf_attribs->height;
+        attribs[atti++] = EGL_LINUX_DRM_FOURCC_EXT;
+        attribs[atti++] = buf_attribs->format;
+
+        for (int i = 0; i < buf_attribs->n_planes; i++) {
+            attribs[atti++] = EGL_DMA_BUF_PLANE0_FD_EXT;
+            attribs[atti++] = buf_attribs->fd[i];
+            attribs[atti++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+            attribs[atti++] = buf_attribs->offset[i];
+            attribs[atti++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
+            attribs[atti++] = buf_attribs->stride[i];
+            attribs[atti++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
+            attribs[atti++] = buf_attribs->modifier[i] & 0xFFFFFFFF;
+            attribs[atti++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
+            attribs[atti++] = buf_attribs->modifier[i] >> 32;
+        }
+    } else {
+        assert(buffer->wlResourceBuffer);
+
+        import_type = EGL_WAYLAND_BUFFER_WL;
+        client_buffer = buffer->wlResourceBuffer;
+
+        attribs[atti++] = EGL_WAYLAND_PLANE_WL;
+        attribs[atti++] = 0;
+    }
+
+    attribs[atti++] = EGL_NONE;
+
+    static PFNEGLCREATEIMAGEKHRPROC eglCreateImage = NULL;
+    if (eglCreateImage == NULL) {
+        eglCreateImage = (PFNEGLCREATEIMAGEKHRPROC)
+            eglGetProcAddress ("eglCreateImageKHR");
+        assert (eglCreateImage != NULL);
+    }
+
+    return eglCreateImage (display,
+                           EGL_NO_CONTEXT,
+                           import_type,
+                           client_buffer,
+                           attribs);
+}
 }
