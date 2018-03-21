@@ -81,6 +81,23 @@ EGLImageKHR
 wpe_view_backend_exportable_fdo_get_egl_image(struct wpe_view_backend_exportable_fdo*,
                                               struct wpe_view_backend_exportable_fdo_buffer*,
                                               EGLDisplay);
+
+/**
+ * wpe_view_backend_exportable_fdo_get_dmabuf_attributes:
+ *
+ * Returns the linux-dmabuf attributes of a given opaque buffer.
+ *
+ * This is a low-level method for applications that want the
+ * flexibility choose the API to import the buffer, and/or
+ * manipulate the attributes before importing.
+ *
+ * Returns: A linux_dmabuf_attributes object, owned by the backend;
+ * or NULL if @buffer doesn't represent a linux-dmabuf buffer.
+ */
+const struct linux_dmabuf_attributes*
+wpe_view_backend_exportable_fdo_get_dmabuf_attributes(struct wpe_view_backend_exportable_fdo*,
+                                                      struct wpe_view_backend_exportable_fdo_buffer*);
+
 #ifdef __cplusplus
 }
 #endif

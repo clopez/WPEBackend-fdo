@@ -298,4 +298,15 @@ wpe_view_backend_exportable_fdo_get_egl_image(struct wpe_view_backend_exportable
                            client_buffer,
                            attribs);
 }
+
+const struct linux_dmabuf_attributes*
+wpe_view_backend_exportable_fdo_get_dmabuf_attributes(struct wpe_view_backend_exportable_fdo *exportable,
+                                                      struct wpe_view_backend_exportable_fdo_buffer *buffer)
+{
+    if (!buffer->dmabufBuffer)
+        return NULL;
+
+    return linux_dmabuf_get_buffer_attributes(buffer->dmabufBuffer);
+}
+
 }
