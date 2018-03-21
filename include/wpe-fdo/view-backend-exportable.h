@@ -6,8 +6,30 @@ extern "C" {
 
 #include <wpe/view-backend.h>
 
+enum wpe_view_backend_buffer_type {
+    WPE_VIEW_BACKEND_BUFFER_TYPE_NONE,
+    WPE_VIEW_BACKEND_BUFFER_TYPE_WL_RESOURCE,
+    WPE_VIEW_BACKEND_BUFFER_TYPE_LINUX_DMABUF,
+};
+
 struct wl_resource;
 struct wpe_view_backend_exportable_fdo;
+
+/**
+ * wpe_view_backend_exportable_fdo_buffer:
+ *
+ * An opaque structure that encapsulates information about a buffer
+ * delivered to the application for rendering.
+ *
+ * Since the introduction of linux-dmabuf interface, there are now two
+ * types of buffer that can be delivered: wayland buffer resource, and
+ * linux-dmabuf buffer descriptors.
+ *
+ * This structure, together with the single 'export_buffer' interface
+ * callback abstracts the underlying nature of the buffer to
+ * applications.
+ */
+struct wpe_view_backend_exportable_fdo_buffer;
 
 struct wpe_view_backend_exportable_fdo_client {
     void (*export_buffer_resource)(void* data, struct wl_resource* buffer_resource);

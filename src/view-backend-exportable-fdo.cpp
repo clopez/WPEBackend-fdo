@@ -6,6 +6,15 @@
 #include <sys/socket.h>
 #include <vector>
 
+extern "C" {
+
+struct wpe_view_backend_exportable_fdo_buffer {
+    struct wl_resource *wlResourceBuffer;
+    const struct linux_dmabuf_buffer *dmabufBuffer;
+};
+
+}
+
 namespace {
 
 class ViewBackend;
