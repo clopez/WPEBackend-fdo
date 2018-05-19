@@ -115,14 +115,23 @@ public:
 
     void dispatchFrameCallback()
     {
-        for (auto* resource : m_callbackResources)
+        struct wl_client* client = nullptr;
+        for (auto* resource : m_callbackResources) {
+            if (!client)
+                client = wl_resource_get_client(resource);
             wl_callback_send_done(resource, 0);
+        }
+
+        if (client)
+            wl_client_flush(client);
         m_callbackResources.clear();
     }
 
     void releaseBuffer(struct wl_resource* buffer_resource)
     {
+        struct wl_client* client = wl_resource_get_client(buffer_resource);
         wl_buffer_send_release(buffer_resource);
+        wl_client_flush(client);
     }
 
 private:
